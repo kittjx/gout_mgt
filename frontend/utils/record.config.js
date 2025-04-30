@@ -4,7 +4,7 @@ import { reactive } from 'vue';
 
 export const recordConfigs = reactive({
   weight: {
-    title: '体重记录',
+    title: '体重',
     fields: [
       { label: '体重 (kg)', key: 'value', type: 'digit', placeholder: '请输入体重' }
     ],
@@ -13,7 +13,7 @@ export const recordConfigs = reactive({
     processor: (form, date) => ({ date, value: parseFloat(form.value) })
   },
   mainFood: {
-    title: '主食记录',
+    title: '主食',
     fields: [
       { label: '食物名称', key: 'name', type: 'text', placeholder: '请输入食物名称' },
       { label: '食用量', key: 'amount', type: 'text', placeholder: '例如: 1碗/100g' }
@@ -23,7 +23,7 @@ export const recordConfigs = reactive({
     processor: (form, date) => ({ date, name: form.name, amount: form.amount })
   },
   waterIntake: {
-    title: '饮水量记录',
+    title: '饮水量',
     fields: [
       { label: '饮水量 (ml)', key: 'amount', type: 'digit', placeholder: '请输入饮水量' }
     ],
@@ -109,11 +109,11 @@ export const recordConfigs = reactive({
     title: '发作情况',
     fields: [
       { label: '持续时间 (小时)', key: 'duration', type: 'digit', placeholder: '请输入发作持续时间' },
-      { label: '疼痛评分 (1-10)', key: 'painScore', type: 'slider', min: 1, max: 10 }
+      { label: '疼痛评分 (0-10)', key: 'painScore', type: 'slider', min: 0, max: 10, initial: 5 }
     ],
     formatter: (item) => `持续: ${item.duration}小时, 疼痛评分: ${item.painScore}/10`,
     validator: (form) => form.duration && !isNaN(parseFloat(form.duration)),
-    processor: (form, date) => ({ date, duration: parseFloat(form.duration), painScore: parseInt(form.painScore) })
+    processor: (form, date) => ({ date, duration: parseFloat(form.duration), painScore: parseInt(form.painScore) || 5 })
   },
   tophi: {
     title: '痛风石情况',

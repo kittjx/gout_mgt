@@ -14,8 +14,11 @@
           <view v-else class="record-list">
             <view v-for="(item, index) in userRecords[key]" :key="index" class="record-item">
               <view class="record-info">
-                <text class="record-date">{{ formatDate(item.date) }}</text>
-                <text class="record-value">{{ formatRecordValue(key, item) }}</text>
+                <view>
+                  <text class="record-date">{{ formatDate(item.date) }}</text>
+                  <text class="record-date">{{ formatTime(item.date) }}</text>
+                </view>
+                <view><text class="record-value">{{ formatRecordValue(key, item) }}</text></view>
               </view>
               <view class="record-actions">
                 <text class="delete-btn" @click="deleteRecord(key, index)">删除</text>
@@ -405,13 +408,13 @@
 
 .record-date {
   font-size: 14px;
-  color: #333;
+  color: #666;
   margin-right: 10px;
 }
 
 .record-value {
   font-size: 14px;
-  color: #666;
+  color: #333;
 }
 
 .record-actions {
