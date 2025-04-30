@@ -24,7 +24,6 @@ class LoginView(APIView):
             if user:
                 # Create or get token
                 token, created = Token.objects.get_or_create(user=user)
-                print(f"Token for user {user.phone}: {token.key}") 
                 
                 return Response({
                     'token': token.key,
