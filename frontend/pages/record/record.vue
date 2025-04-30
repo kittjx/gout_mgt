@@ -123,9 +123,14 @@
     purineFood: false,
     uricAcid: false,
     urinePH: false,
-    examinations: false,
+    liverFunction: false,
+    kidneyFunction: false,
+    bloodSugar: false,
+    bloodPressure: false,
+    bloodLipid: false,
     attack: false,
     tophi: false,
+    surgery: false,
     jointFunction: false
   });
 
@@ -167,6 +172,7 @@
       painScore: 8
     }],
     tophi: [],
+    surgery: [],
     jointFunction: []
   });
 
