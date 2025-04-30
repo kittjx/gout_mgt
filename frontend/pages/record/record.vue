@@ -130,6 +130,7 @@
     bloodLipid: false,
     attack: false,
     tophi: false,
+    surgery: false,
     jointFunction: false
   });
 
@@ -171,6 +172,7 @@
       painScore: 8
     }],
     tophi: [],
+    surgery: [],
     jointFunction: []
   });
 

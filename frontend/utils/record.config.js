@@ -125,6 +125,16 @@ export const recordConfigs = reactive({
     validator: (form) => form.location && form.diameter && !isNaN(parseFloat(form.diameter)),
     processor: (form, date) => ({ date, location: form.location, diameter: parseFloat(form.diameter) })
   },
+  surgery: {
+    title: '痛风石手术',
+    fields: [
+      { label: '手术部位', key: 'location', type: 'text', placeholder: '请输入手术部位' },
+      { label: '备注', key: 'notes', type: 'textarea', placeholder: '请输入备注信息（选填）' }
+    ],
+    formatter: (item) => `${item.location}`,
+    validator: (form) => form.location,
+    processor: (form, date) => ({ date, location: form.location, notes: form.notes || '' })
+  },
   jointFunction: {
     title: '关节功能',
     fields: [
