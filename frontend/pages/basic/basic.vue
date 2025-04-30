@@ -243,12 +243,14 @@
     </view>
     
     <button class="save-btn" @tap="saveBasicInfo">保存信息</button>
+    <LogoutButton />
   </view>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { API_BASE_URL } from '@/utils/config.js';
+import LogoutButton from '@/components/LogoutButton.vue';
 
 const basicInfo = reactive({
   diagnosis_date: '',

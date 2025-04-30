@@ -6,11 +6,6 @@ from accounts.auth import TokenAuthentication
 from .models import BasicCondition
 from .serializers import BasicConditionSerializer
 
-import logging
-import json
-
-logger = logging.getLogger(__name__)
-
 class BasicConditionView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -25,16 +20,11 @@ class BasicConditionView(APIView):
 
     def post(self, request):
         try:
-            logger.info(f"POST request for user: {request.user.phone}")
-            logger.info(f"Received data: {json.dumps(request.data, default=str)}")
-
             condition, created = BasicCondition.objects.get_or_create(user=request.user)
             serializer = BasicConditionSerializer(condition, data=request.data, partial=True)
             
             if serializer.is_valid():
-                logger.info(f"Validated data: {json.dumps(serializer.validated_data, default=str)}")
-                instance = serializer.save()
-                logger.info(f"Saved instance data: {json.dumps(BasicConditionSerializer(instance).data, default=str)}")
+                serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

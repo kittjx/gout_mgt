@@ -24,15 +24,3 @@ class BasicConditionSerializer(serializers.ModelSerializer):
             'complication_dates',
             'medicines'
         ]
-    
-    def validate(self, data):
-        logger.info(f"Validating data: {data}")
-        return data
-
-    def create(self, validated_data):
-        logger.info(f"Creating with validated data: {validated_data}")
-        return super().create(validated_data)
-
-    def update(self, instance, validated_data):
-        logger.info(f"Updating instance with validated data: {validated_data}")
-        return super().update(instance, validated_data)
