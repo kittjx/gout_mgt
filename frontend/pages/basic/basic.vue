@@ -14,12 +14,12 @@
         <text class="label">高尿酸血症确诊时间</text>
         <picker 
           mode="date" 
-          :value="basicInfo.diagnosisDate" 
-          @change="e => basicInfo.diagnosisDate = e.detail.value"
+          :value="basicInfo.diagnosis_date" 
+          @change="e => basicInfo.diagnosis_date = e.detail.value"
           :end="today"
         >
           <view class="picker-value">
-            <text>{{ basicInfo.diagnosisDate || '请选择确诊时间' }}</text>
+            <text>{{ basicInfo.diagnosis_date || '请选择确诊时间' }}</text>
             <view class="arrow-right"></view>
           </view>
         </picker>
@@ -29,12 +29,12 @@
         <text class="label">首次痛风发作时间</text>
         <picker 
           mode="date" 
-          :value="basicInfo.firstAttackDate" 
-          @change="e => basicInfo.firstAttackDate = e.detail.value"
+          :value="basicInfo.first_attack_date" 
+          @change="e => basicInfo.first_attack_date = e.detail.value"
           :end="today"
         >
           <view class="picker-value">
-            <text>{{ basicInfo.firstAttackDate || '请选择首次发作时间' }}</text>
+            <text>{{ basicInfo.first_attack_date || '请选择首次发作时间' }}</text>
             <view class="arrow-right"></view>
           </view>
         </picker>
@@ -48,7 +48,7 @@
           @change="onAttackFrequencyChange"
         >
           <view class="picker-value">
-            <text>{{ basicInfo.attackFrequency || '请选择发作频率' }}</text>
+            <text>{{ basicInfo.attack_frequency || '请选择发作频率' }}</text>
             <view class="arrow-right"></view>
           </view>
         </picker>
@@ -57,11 +57,11 @@
       <view class="form-item">
         <text class="label">既往发作程度 (0-10分，最痛10分，无痛0分)</text>
         <slider 
-          :value="parseFloat(basicInfo.painLevel) || 0" 
+          :value="parseFloat(basicInfo.pain_level) || 0" 
           min="0" 
           max="10" 
           show-value 
-          @change="e => basicInfo.painLevel = e.detail.value"
+          @change="e => basicInfo.pain_level = e.detail.value"
           activeColor="#42b983"
           block-color="#42b983"
         />
@@ -69,9 +69,9 @@
       
       <view class="form-item">
         <text class="label">痛风分型</text>
-        <radio-group @change="e => basicInfo.goutType = e.detail.value">
+        <radio-group @change="e => basicInfo.gout_type = e.detail.value">
           <label class="radio-item" v-for="(item, index) in goutTypeOptions" :key="index">
-            <radio :value="item" :checked="basicInfo.goutType === item" color="#42b983" />
+            <radio :value="item" :checked="basicInfo.gout_type === item" color="#42b983" />
             <text>{{ item }}</text>
           </label>
         </radio-group>
@@ -86,21 +86,21 @@
       
       <view class="form-item">
         <text class="label">饮酒史</text>
-        <radio-group @change="e => basicInfo.drinkingHistory = e.detail.value">
+        <radio-group @change="e => basicInfo.drinking_history = e.detail.value">
           <label class="radio-item">
-            <radio value="无" :checked="basicInfo.drinkingHistory === '无'" color="#42b983" />
+            <radio value="无" :checked="basicInfo.drinking_history === '无'" color="#42b983" />
             <text>无</text>
           </label>
           <label class="radio-item">
-            <radio value="偶尔" :checked="basicInfo.drinkingHistory === '偶尔'" color="#42b983" />
+            <radio value="偶尔" :checked="basicInfo.drinking_history === '偶尔'" color="#42b983" />
             <text>偶尔</text>
           </label>
           <label class="radio-item">
-            <radio value="经常" :checked="basicInfo.drinkingHistory === '经常'" color="#42b983" />
+            <radio value="经常" :checked="basicInfo.drinking_history === '经常'" color="#42b983" />
             <text>经常</text>
           </label>
           <label class="radio-item">
-            <radio value="已戒酒" :checked="basicInfo.drinkingHistory === '已戒酒'" color="#42b983" />
+            <radio value="已戒酒" :checked="basicInfo.drinking_history === '已戒酒'" color="#42b983" />
             <text>已戒酒</text>
           </label>
         </radio-group>
@@ -111,13 +111,13 @@
         <view class="sub-item">
           <text class="sub-label">是否饮用</text>
           <switch 
-            :checked="basicInfo.drinkSoda" 
-            @change="e => basicInfo.drinkSoda = e.detail.value"
+            :checked="basicInfo.drink_soda" 
+            @change="e => basicInfo.drink_soda = e.detail.value"
             color="#42b983"
           />
         </view>
         
-        <view class="sub-item" v-if="basicInfo.drinkSoda">
+        <view class="sub-item" v-if="basicInfo.drink_soda">
           <text class="sub-label">频率</text>
           <picker 
             :range="sodaFrequencyOptions" 
@@ -125,7 +125,7 @@
             @change="onSodaFrequencyChange"
           >
             <view class="picker-value">
-              <text>{{ basicInfo.sodaFrequency || '请选择频率' }}</text>
+              <text>{{ basicInfo.soda_frequency || '请选择频率' }}</text>
               <view class="arrow-right"></view>
             </view>
           </picker>
@@ -137,33 +137,33 @@
         <view class="sub-item">
           <text class="sub-label">是否限制</text>
           <switch 
-            :checked="basicInfo.limitPurine" 
-            @change="e => basicInfo.limitPurine = e.detail.value"
+            :checked="basicInfo.limit_purine" 
+            @change="e => basicInfo.limit_purine = e.detail.value"
             color="#42b983"
           />
         </view>
         
-        <view class="sub-item" v-if="basicInfo.limitPurine">
+        <view class="sub-item" v-if="basicInfo.limit_purine">
           <text class="sub-label">开始时间</text>
           <picker 
             mode="date" 
-            :value="basicInfo.limitPurineDate" 
-            @change="e => basicInfo.limitPurineDate = e.detail.value"
+            :value="basicInfo.limit_purine_date" 
+            @change="e => basicInfo.limit_purine_date = e.detail.value"
             :end="today"
           >
             <view class="picker-value">
-              <text>{{ basicInfo.limitPurineDate || '请选择开始时间' }}</text>
+              <text>{{ basicInfo.limit_purine_date || '请选择开始时间' }}</text>
               <view class="arrow-right"></view>
             </view>
           </picker>
         </view>
       </view>
       
-      <view class="form-item" v-if="basicInfo.limitPurine">
+      <view class="form-item" v-if="basicInfo.limit_purine">
         <text class="label">主要限制食物</text>
         <checkbox-group @change="onLimitFoodChange">
           <label class="checkbox-item" v-for="(item, index) in limitFoodOptions" :key="index">
-            <checkbox :value="item" :checked="basicInfo.limitFoods.includes(item)" color="#42b983" />
+            <checkbox :value="item" :checked="basicInfo.limit_foods.includes(item)" color="#42b983" />
             <text>{{ item }}</text>
           </label>
         </checkbox-group>
@@ -192,12 +192,12 @@
           <text class="complication-name">{{ getComplicationLabel(item) }}</text>
           <picker 
             mode="date" 
-            :value="basicInfo.complicationDates[item]" 
+            :value="basicInfo.complication_dates[item]" 
             @change="e => onComplicationDateChange(item, e.detail.value)"
             :end="today"
           >
             <view class="picker-value">
-              <text>{{ basicInfo.complicationDates[item] || '请选择确诊时间' }}</text>
+              <text>{{ basicInfo.complication_dates[item] || '请选择确诊时间' }}</text>
               <view class="arrow-right"></view>
             </view>
           </picker>
@@ -248,85 +248,148 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
+import { API_BASE_URL } from '@/utils/config.js';
 
-// 获取当前日期
-const today = new Date().toISOString().split('T')[0];
-
-// 选项数据
-const attackFrequencyOptions = ['每年1-2次', '每年3-5次', '每年6次以上', '每月至少1次'];
-const sodaFrequencyOptions = ['每天', '每周数次', '每月数次', '很少'];
-const limitFoodOptions = ['动物内脏', '肉汤', '海鲜', '零食'];
-const goutTypeOptions = ['生成过多型', '排泄障碍型', '混合型'];
-const complicationsOptions = [
-  { value: 'hypertension', label: '高血压' },
-  { value: 'diabetes', label: '糖尿病' },
-  { value: 'hyperlipidemia', label: '高血脂' },
-  { value: 'coronary', label: '冠心病' },
-  { value: 'liver', label: '肝功能异常' },
-  { value: 'kidney', label: '肾功能异常' }
-];
-
-// 索引值，用于选择器
-const attackFrequencyIndex = ref(0);
-const sodaFrequencyIndex = ref(0);
-
-// 基础信息数据
 const basicInfo = reactive({
-  diagnosisDate: '',
-  firstAttackDate: '',
-  attackFrequency: '',
-  painLevel: 0,
-  drinkingHistory: '无',
-  drinkSoda: false,
-  sodaFrequency: '',
-  limitPurine: false,
-  limitPurineDate: '',
-  limitFoods: [],
-  goutType: '生成过多型',
+  diagnosis_date: '',
+  first_attack_date: '',
+  attack_frequency: '',
+  pain_level: 0,
+  gout_type: '',
+  drinking_history: '',
+  drink_soda: false,
+  soda_frequency: '',
+  limit_purine: false,
+  limit_purine_date: '',
+  limit_foods: [],
   complications: [],
-  complicationDates: {},
+  complication_dates: {},
   medicines: []
 });
 
-// 处理发作频率选择
+const attackFrequencyOptions = ['每月1次以下', '每月1-2次', '每月3次以上'];
+const attackFrequencyIndex = ref(0);
+const sodaFrequencyOptions = ['每天', '每周几次', '偶尔'];
+const sodaFrequencyIndex = ref(0);
+const goutTypeOptions = ['代谢障碍型', '生成过多型', '混合型'];
+const limitFoodOptions = ['海鲜', '动物内脏', '啤酒', '红肉'];
+const complicationsOptions = [
+  { value: 'hypertension', label: '高血压' }, 
+  { value: 'diabetes', label: '糖尿病' }, 
+  { value: 'kidney_disease', label: '肾病' }, 
+  { value: 'heart_disease', label: '心脏病' }]
+;
+
+const today = computed(() => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+});
+
+const loadBasicInfo = async () => {
+  try {
+    const token = uni.getStorageSync('token');
+    if (!token) {
+      uni.redirectTo({ url: '/pages/login/login' });
+      return;
+    }
+
+    uni.showLoading({ title: '加载中...' });
+    
+    const res = await uni.request({
+      url: `${API_BASE_URL}/condition/basic/`,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    uni.hideLoading();
+
+    if (res.statusCode === 200 && res.data) {
+      Object.assign(basicInfo, res.data);
+      updatePickerIndexes();
+    }
+  } catch (error) {
+    uni.hideLoading();
+    uni.showToast({
+      title: '加载失败',
+      icon: 'none'
+    });
+  }
+};
+
+const saveBasicInfo = async () => {
+  try {
+    const token = uni.getStorageSync('token');
+    if (!token) {
+      uni.redirectTo({ url: '/pages/login/login' });
+      return;
+    }
+
+    uni.showLoading({ title: '保存中...' });
+
+    const res = await uni.request({
+      url: `${API_BASE_URL}/condition/basic/`,
+      method: 'POST',
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: basicInfo  // We can now send basicInfo directly
+    });
+
+    uni.hideLoading();
+
+    if (res.statusCode === 200) {
+      uni.showToast({
+        title: '保存成功',
+        icon: 'success'
+      });
+    } else {
+      throw new Error('保存失败');
+    }
+  } catch (error) {
+    uni.hideLoading();
+    uni.showToast({
+      title: '保存失败',
+      icon: 'none'
+    });
+  }
+};
+
+const updatePickerIndexes = () => {
+  const afIndex = attackFrequencyOptions.findIndex(item => item === basicInfo.attack_frequency);
+  if (afIndex !== -1) attackFrequencyIndex.value = afIndex;
+  
+  const sfIndex = sodaFrequencyOptions.findIndex(item => item === basicInfo.soda_frequency);
+  if (sfIndex !== -1) sodaFrequencyIndex.value = sfIndex;
+};
+
 const onAttackFrequencyChange = (e) => {
   const index = e.detail.value;
+  basicInfo.attack_frequency = attackFrequencyOptions[index];
   attackFrequencyIndex.value = index;
-  basicInfo.attackFrequency = attackFrequencyOptions[index];
 };
 
-// 处理碳酸饮料频率选择
 const onSodaFrequencyChange = (e) => {
   const index = e.detail.value;
+  basicInfo.soda_frequency = sodaFrequencyOptions[index];
   sodaFrequencyIndex.value = index;
-  basicInfo.sodaFrequency = sodaFrequencyOptions[index];
 };
 
-// 处理限制食物选择
 const onLimitFoodChange = (e) => {
-  basicInfo.limitFoods = e.detail.value;
+  basicInfo.limit_foods = e.detail.value;
 };
 
-// 处理并发症选择
 const onComplicationsChange = (e) => {
   basicInfo.complications = e.detail.value;
 };
 
-// 获取并发症标签
 const getComplicationLabel = (value) => {
-  const item = complicationsOptions.find(item => item.value === value);
-  return item ? item.label : value;
+  const option = complicationsOptions.find(opt => opt.value === value);
+  return option ? option.label : value;
 };
 
-// 处理并发症日期选择
-const onComplicationDateChange = (complication, date) => {
-  if (!basicInfo.complicationDates) {
-    basicInfo.complicationDates = {};
-  }
-  basicInfo.complicationDates[complication] = date;
-};
-
-// 添加药物
 const addMedicine = () => {
   basicInfo.medicines.push({
     name: '',
@@ -334,53 +397,19 @@ const addMedicine = () => {
   });
 };
 
-// 删除药物
 const deleteMedicine = (index) => {
   basicInfo.medicines.splice(index, 1);
 };
 
-// 保存基础信息
-const saveBasicInfo = () => {
-  // 基本验证
-  if (!basicInfo.diagnosisDate) {
-    uni.showToast({
-      title: '请选择确诊时间',
-      icon: 'none'
-    });
-    return;
+const onComplicationDateChange = (complication, date) => {
+  if (!basicInfo.complication_dates) {
+    basicInfo.complication_dates = {};
   }
-  
-  // 保存数据到本地存储
-  uni.setStorageSync('basicInfo', JSON.stringify(basicInfo));
-  
-  uni.showToast({
-    title: '保存成功',
-    icon: 'success'
-  });
+  basicInfo.complication_dates[complication] = date;
 };
 
-// 页面加载时获取本地存储的数据
 onMounted(() => {
-  const savedInfo = uni.getStorageSync('basicInfo');
-  if (savedInfo) {
-    try {
-      const parsedInfo = JSON.parse(savedInfo);
-      Object.assign(basicInfo, parsedInfo);
-      
-      // 更新选择器索引
-      const afIndex = attackFrequencyOptions.findIndex(item => item === basicInfo.attackFrequency);
-      if (afIndex !== -1) {
-        attackFrequencyIndex.value = afIndex;
-      }
-      
-      const sfIndex = sodaFrequencyOptions.findIndex(item => item === basicInfo.sodaFrequency);
-      if (sfIndex !== -1) {
-        sodaFrequencyIndex.value = sfIndex;
-      }
-    } catch (e) {
-      console.error('解析基础信息失败', e);
-    }
-  }
+  loadBasicInfo();
 });
 </script>
 
