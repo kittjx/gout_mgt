@@ -123,14 +123,9 @@
     purineFood: false,
     uricAcid: false,
     urinePH: false,
-    liverFunction: false,
-    kidneyFunction: false,
-    bloodSugar: false,
-    bloodPressure: false,
-    bloodLipid: false,
+    examinations: false,
     attack: false,
     tophi: false,
-    surgery: false,
     jointFunction: false
   });
 
@@ -172,7 +167,6 @@
       painScore: 8
     }],
     tophi: [],
-    surgery: [],
     jointFunction: []
   });
 
@@ -696,18 +690,18 @@
   .uni-date-editor--x {
     background-color: transparent !important;
   }
-
+  
   .radio-group {
     width: 100%;
   }
-
+  
   .radio-options {
     display: flex;
     width: 100%;
     border-radius: 4px;
     overflow: hidden;
   }
-
+  
   .radio-option {
     flex: 1;
     text-align: center;
@@ -717,18 +711,18 @@
     border: 1px solid #ddd;
     color: #666;
   }
-
+  
   .radio-option:first-child {
     border-right: none;
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
   }
-
+  
   .radio-option:last-child {
     border-top-right-radius: 4px;
     border-bottom-right-radius: 4px;
   }
-
+  
   .radio-selected {
     background-color: #4a86e8;
     color: white;
