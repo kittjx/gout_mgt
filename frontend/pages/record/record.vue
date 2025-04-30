@@ -39,9 +39,17 @@
 
         <view class="modal-body">
           <view class="form-item">
-            <text class="form-label">记录时间</text>
-            <uni-datetime-picker type="datetime" v-model="selectedDateTime" start="2020-01-01 00:00:00"
-              end="2030-12-31 23:59:59" return-type="string" />
+            <text class="form-label">日期</text>
+            <picker mode="date" :value="selectedDate" :start="startDate" :end="endDate" @change="onDateChange">
+              <view class="picker-value">{{ selectedDate || '请选择日期' }}</view>
+            </picker>
+          </view>
+
+          <view class="form-item">
+            <text class="form-label">时间</text>
+            <picker mode="time" :value="selectedTime" @change="onTimeChange">
+              <view class="picker-value">{{ selectedTime || '请选择时间' }}</view>
+            </picker>
           </view>
 
           <!-- 动态生成表单字段 -->
@@ -179,7 +187,10 @@
   // 控制新增记录弹窗的显示
   const showAddRecordModal = ref(false);
   const currentRecordType = ref('');
-  const selectedDateTime = ref('');
+  const selectedDate = ref(formatDate(new Date()));
+  const selectedTime = ref(formatTime(new Date()));
+  const startDate = '2020-01-01';
+  const endDate = '2030-12-31';
   const dynamicForm = reactive({});
   const currentFormFields = ref([]);
 
@@ -191,18 +202,22 @@
   // 打开模态框并设置类型
   const openAddModal = (recordType) => {
     currentRecordType.value = recordType;
-    selectedDateTime.value = getCurrentFormattedDateTimeString();
-
-    // 清空表单
+    
+    // Set current date and time as initial values
+    const now = new Date();
+    selectedDate.value = formatDate(now);
+    selectedTime.value = formatTime(now);
+    
+    // Clear form
     Object.keys(dynamicForm).forEach(key => {
       delete dynamicForm[key];
     });
 
-    // 设置当前表单字段
+    // Set current form fields
     const recordKey = getTitleToKeyMap.value[recordType];
     currentFormFields.value = recordConfigs[recordKey].fields;
 
-    // 设置滑块默认值
+    // Set slider default values
     currentFormFields.value.forEach(field => {
       if (field.type === 'slider') {
         dynamicForm[field.key] = field.min + Math.floor((field.max - field.min) / 2);
@@ -212,17 +227,32 @@
     showAddRecordModal.value = true;
   };
 
-  // 获取当前格式化日期时间字符串
-  const getCurrentFormattedDateTimeString = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  };
+  // Format date to YYYY-MM-DD
+  function formatDate(date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Format time to HH:mm
+  function formatTime(date) {
+    const d = new Date(date);
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // Handle date picker change
+  function onDateChange(e) {
+    selectedDate.value = e.detail.value;
+  }
+
+  // Handle time picker change
+  function onTimeChange(e) {
+    selectedTime.value = e.detail.value;
+  }
 
   // 处理选择器变化
   const handlePickerChange = (e, key) => {
@@ -241,62 +271,42 @@
 
   // 添加记录
   const addRecord = () => {
-    if (!selectedDateTime.value) {
-      uni.showToast({
-        title: '请选择记录时间',
-        icon: 'none'
-      });
-      return;
-    }
+    const recordKey = getTitleToKeyMap.value[currentRecordType.value];
+    if (!recordKey) return;
 
-    const recordDate = new Date(selectedDateTime.value.replace(/-/g, "/"));
+    // Combine date and time
+    const dateTimeStr = `${selectedDate.value} ${selectedTime.value}:00`;
+    const recordDate = new Date(dateTimeStr.replace(/-/g, '/'));
 
+    // Validate date
     if (isNaN(recordDate.getTime())) {
       uni.showToast({
-        title: '无效的日期时间格式',
-        icon: 'none'
-      });
-      console.error("Invalid date constructed from picker:", selectedDateTime.value);
-      return;
-    }
-
-    const recordKey = getTitleToKeyMap.value[currentRecordType.value];
-    if (!recordKey) {
-      console.error("Invalid record type selected:", currentRecordType.value);
-      uni.showToast({
-        title: '无效的记录类型',
+        title: '请选择有效的日期和时间',
         icon: 'none'
       });
       return;
     }
 
-    const config = recordConfigs[recordKey];
+    // Create new record
+    const newRecord = {
+      date: recordDate,
+      ...dynamicForm
+    };
 
-    // 验证
-    if (config.validator(dynamicForm)) {
-      // 处理数据并添加记录
-      const newRecordData = config.processor(dynamicForm, recordDate);
-      userRecords[recordKey].unshift(newRecordData);
+    // Add to records
+    userRecords[recordKey].push(newRecord);
+    
+    // Sort records by date (newest first)
+    userRecords[recordKey].sort((a, b) => b.date.getTime() - a.date.getTime());
 
-      // 排序记录
-      userRecords[recordKey].sort((a, b) => b.date.getTime() - a.date.getTime());
+    // Close modal
+    showAddRecordModal.value = false;
 
-      showAddRecordModal.value = false;
-
-      // 清空表单
-      Object.keys(dynamicForm).forEach(key => {
-        delete dynamicForm[key];
-      });
-
-      currentRecordType.value = '';
-      selectedDateTime.value = '';
-      currentFormFields.value = [];
-    } else {
-      uni.showToast({
-        title: '请填写完整的记录信息',
-        icon: 'none'
-      });
-    }
+    // Show success message
+    uni.showToast({
+      title: '添加成功',
+      icon: 'success'
+    });
   };
 
   // 删除记录
@@ -320,418 +330,242 @@
     });
   };
 
-  // 格式化日期
-  const formatDate = (date) => {
-    if (!(date instanceof Date)) {
-      const parsedDate = new Date(date);
-      if (isNaN(parsedDate.getTime())) return '无效日期';
-      date = parsedDate;
-    }
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-
-    const isToday = date.getFullYear() === today.getFullYear() &&
-      date.getMonth() === today.getMonth() &&
-      date.getDate() === today.getDate();
-
-    const isYesterday = date.getFullYear() === yesterday.getFullYear() &&
-      date.getMonth() === yesterday.getMonth() &&
-      date.getDate() === yesterday.getDate();
-
-    if (isToday) {
-      return `今天 ${hours}:${minutes}`;
-    } else if (isYesterday) {
-      return `昨天 ${hours}:${minutes}`;
-    } else {
-      if (year === today.getFullYear()) {
-        return `${month}-${day} ${hours}:${minutes}`;
-      } else {
-        return `${year}-${month}-${day} ${hours}:${minutes}`;
-      }
-    }
-  };
+  
 </script>
 
-<style>
-  .container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: #f5f7fa;
-    padding-bottom: calc(56px + env(safe-area-inset-bottom));
-  }
 
-  .header {
-    padding: 20px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #ffffff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
+<style lang="scss" scoped>
+.container {
+  padding: 15px;
+  background-color: #f7f7f7;
+}
 
-  .title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-  }
+.accordion-container {
+  background: #fff;
+  border-radius: 8px;
+}
 
-  .accordion-container {
-    margin: 16px;
-    padding-bottom: 10px;
-  }
-
-  .accordion-item {
-    margin-bottom: 12px;
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: #ffffff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  }
-
-  .accordion-header {
-    padding: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #ffffff;
-    cursor: pointer;
-  }
-
-  .accordion-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: #333;
-  }
-
-  .accordion-icon {
-    font-size: 14px;
-    color: #4a86e8;
-  }
-
-  .accordion-content {
-    background-color: #ffffff;
-    padding: 0 16px 12px 16px;
-    border-top: 1px solid #f0f0f0;
-  }
-
-  .empty-message {
-    padding: 16px 0;
-    text-align: center;
-    color: #999;
-    font-size: 14px;
-  }
-
-  .record-list {
-    max-height: 300px;
-    overflow-y: auto;
-    padding-top: 12px;
-  }
-
-  .record-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f5f5f5;
-  }
-
-  .record-item:last-child {
+.accordion-item {
+  border-bottom: 1px solid #eee;
+  
+  &:last-child {
     border-bottom: none;
   }
+}
 
-  .record-info {
-    flex: 1;
-    margin-right: 8px;
-  }
+.accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #fff;
+}
 
-  .record-date {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 4px;
-    display: block;
-  }
+.accordion-title {
+  font-size: 16px;
+  color: #333;
+}
 
-  .record-value {
-    font-size: 15px;
-    color: #333;
-    word-break: break-word;
-  }
+.accordion-icon {
+  color: #666;
+  font-size: 12px;
+}
 
-  .record-actions {
-    margin-left: auto;
-  }
+.accordion-content {
+  background: #fff;
+  padding: 0 15px;
+}
 
-  .delete-btn {
-    font-size: 13px;
-    color: #ff4d4f;
-    padding: 4px 8px;
-    cursor: pointer;
-  }
+.empty-message {
+  padding: 20px 0;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
 
-  .add-record-in-section {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 0;
-    margin-top: 10px;
-    border-top: 1px dashed #eee;
-    cursor: pointer;
-    color: #4a86e8;
-    font-size: 14px;
-  }
+.record-list {
+  padding: 10px 0;
+}
 
-  .add-icon {
-    font-size: 20px;
-    font-weight: bold;
-    margin-right: 6px;
-    line-height: 1;
-  }
-
-  /* Modal styles */
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-
-  .modal-content {
-    width: 85%;
-    max-width: 400px;
-    max-height: 85vh;
-    background-color: #fff;
-    border-radius: 10px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .modal-header {
-    padding: 16px;
-    border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .modal-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .modal-close {
-    font-size: 24px;
-    color: #999;
-    cursor: pointer;
-  }
-
-  .modal-body {
-    padding: 16px;
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  .modal-footer {
-    padding: 12px 16px;
-    border-top: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: flex-end;
-    background-color: #f9f9f9;
-  }
-
-  .cancel-btn {
-    margin-right: 12px;
-    padding: 8px 16px;
-    background-color: #f5f5f5;
-    color: #666;
-    border-radius: 4px;
-    font-size: 14px;
-    border: 1px solid #ddd;
-  }
-
-  .confirm-btn {
-    padding: 8px 16px;
-    background-color: #4a86e8;
-    color: white;
-    border-radius: 4px;
-    font-size: 14px;
-    border: none;
-  }
-
-  /* Form styles */
-  .form-item {
-    margin-bottom: 16px;
-  }
-
-  .form-label {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .input,
-  .textarea {
-    box-sizing: border-box;
-    width: 100%;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 0 12px;
-    font-size: 14px;
-    color: #333;
-    background-color: #f9f9f9;
-    height: 40px;
-  }
-
-  .textarea {
-    height: 80px;
-    padding: 8px 12px;
-  }
-
-  .picker {
-    height: 40px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    box-sizing: border-box;
-    width: 100%;
-    position: relative;
-  }
-
-  .picker-value {
-    font-size: 14px;
-    color: #333;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .picker::after {
-    content: '▼';
-    font-size: 12px;
-    color: #999;
-    margin-left: 8px;
-  }
-
-  .slider {
-    margin: 15px 0;
-  }
-
-  /* Uni DateTime Picker styles */
-  .uni-date {
-    border: 1px solid #ddd !important;
-    border-radius: 4px !important;
-    background-color: #f9f9f9 !important;
-    height: 40px !important;
-    padding: 0 10px !important;
-    box-sizing: border-box;
-    display: flex !important;
-    align-items: center !important;
-  }
-
-  .uni-date-editor--x .uni-date__input {
-    background-color: transparent !important;
-    color: #333 !important;
-    font-size: 14px !important;
-    height: 100% !important;
-    line-height: normal !important;
-    padding: 0 5px !important;
-    margin: 0 !important;
-    border: none !important;
-    flex: 1;
-  }
-
-  .uni-date-editor--x .uni-date__input::-webkit-input-placeholder {
-    color: #999 !important;
-    font-size: 14px !important;
-  }
-
-  .uni-date-editor--x .uni-date__input:-ms-input-placeholder {
-    color: #999 !important;
-    font-size: 14px !important;
-  }
-
-  .uni-date-editor--x .uni-date__input::-moz-placeholder {
-    color: #999 !important;
-    font-size: 14px !important;
-    opacity: 1;
-  }
-
-  .uni-date-editor--x .uni-date-header-icon,
-  .uni-date-editor--x .uni-date__icon-clear {
-    background-color: transparent !important;
-    color: #909399 !important;
-    padding: 0 5px !important;
-    display: flex !important;
-    align-items: center !important;
-  }
-
-  .uni-date-x--border {
-    border: none !important;
-  }
-
-  .uni-date-editor--x {
-    background-color: transparent !important;
-  }
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
   
-  .radio-group {
-    width: 100%;
+  &:last-child {
+    border-bottom: none;
   }
-  
+}
+
+.record-info {
+  flex: 1;
+}
+
+.record-date {
+  font-size: 14px;
+  color: #333;
+  margin-right: 10px;
+}
+
+.record-value {
+  font-size: 14px;
+  color: #666;
+}
+
+.record-actions {
+  padding-left: 15px;
+}
+
+.delete-btn {
+  color: #ff5a5f;
+  font-size: 14px;
+}
+
+.add-record-in-section {
+  display: flex;
+  align-items: center;
+  padding: 15px 0;
+  color: #2979ff;
+  font-size: 14px;
+}
+
+.add-icon {
+  margin-right: 5px;
+  font-size: 16px;
+}
+
+// Modal styles
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-content {
+  width: 85%;
+  max-height: 80vh;
+  overflow-y: auto;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.modal-close {
+  font-size: 20px;
+  color: #999;
+  padding: 5px;
+}
+
+.form-item {
+  margin-bottom: 15px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.picker-value {
+  height: 40px;
+  line-height: 40px;
+  padding: 0 12px;
+  background-color: #f7f7f7;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+}
+
+.input {
+  height: 40px;
+  line-height: 40px;
+  padding: 0 12px;
+  background-color: #f7f7f7;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.textarea {
+  width: 100%;
+  height: 100px;
+  padding: 12px;
+  background-color: #f7f7f7;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.radio-group {
   .radio-options {
     display: flex;
-    width: 100%;
-    border-radius: 4px;
-    overflow: hidden;
+    flex-wrap: wrap;
+    gap: 10px;
   }
-  
+
   .radio-option {
-    flex: 1;
-    text-align: center;
-    background-color: #f5f5f5;
-    padding: 10px 0;
+    padding: 8px 15px;
+    border-radius: 4px;
+    background-color: #f7f7f7;
     font-size: 14px;
-    border: 1px solid #ddd;
-    color: #666;
+    color: #333;
+
+    &.radio-selected {
+      background-color: #2979ff;
+      color: #fff;
+    }
   }
-  
-  .radio-option:first-child {
-    border-right: none;
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-  }
-  
-  .radio-option:last-child {
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-  }
-  
-  .radio-selected {
-    background-color: #4a86e8;
-    color: white;
-    border-color: #4a86e8;
-  }
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.cancel-btn,
+.confirm-btn {
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.cancel-btn {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.confirm-btn {
+  background-color: #2979ff;
+  color: #fff;
+}
+
+// Slider customization
+.slider {
+  margin: 15px 0;
+}
 </style>
