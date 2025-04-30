@@ -1,0 +1,33 @@
+
+services:
+  django:
+    image: django-dev
+    build: .
+    container_name: django-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code
+    working_dir: /code
+    tty: true
+    depends_on:
+      - db
+    environment:
+      DJANGO_DB_HOST: db
+      DJANGO_DB_NAME: devdb
+      DJANGO_DB_USER: devuser
+      DJANGO_DB_PASSWORD: devpass
+
+  db:
+    image: mysql:9
+    container_name: mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: devdb
+      MYSQL_USER: devuser
+      MYSQL_PASSWORD: devpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db_data:/var/lib/mysql

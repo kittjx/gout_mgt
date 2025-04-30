@@ -1,0 +1,66 @@
+{
+  "pages": [
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/register/register",
+      "style": {
+        "navigationBarTitleText": "注册"
+      }
+    },
+    {
+      "path": "pages/personal/personal",
+      "style": {
+        "navigationBarTitleText": "个人信息"
+      }
+    },
+    {
+      "path": "pages/basic/basic",
+      "style": {
+        "navigationBarTitleText": "基础病情"
+      }
+    },
+    {
+      "path": "pages/record/record",
+      "style": {
+        "navigationBarTitleText": "信息记录"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "痛风患者信息管理",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#3cc51f",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/personal/personal",
+        "iconPath": "/static/icons/customer.png",
+        "selectedIconPath": "/static/icons/customer-fill.png",
+        "text": "个人信息"
+      },
+      {
+        "pagePath": "pages/basic/basic",
+        "iconPath": "/static/icons/info.png",
+        "selectedIconPath": "/static/icons/info-fill.png",
+        "text": "基础病情"
+      },
+      {
+        "pagePath": "pages/record/record",
+        "iconPath": "/static/icons/catalog.png",
+        "selectedIconPath": "/static/icons/catalog-fill.png",
+        "text": "信息记录"
+      }
+    ]
+  }
+}
