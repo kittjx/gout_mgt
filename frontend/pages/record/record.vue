@@ -426,6 +426,7 @@
 .add-record-in-section {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 15px 0;
   color: #2979ff;
   font-size: 14px;
