@@ -108,6 +108,8 @@
         </view>
       </view>
     </view>
+
+    <LogoutButton />
   </view>
 </template>
 
@@ -122,6 +124,7 @@ import {
   recordConfigs
 } from '@/utils/record.config.js';
 import { API_BASE_URL } from '@/utils/config.js';
+import LogoutButton from '@/components/LogoutButton.vue';
 
 // 用于反向查找键
 const getTitleToKeyMap = computed(() => {
