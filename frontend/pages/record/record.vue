@@ -87,8 +87,13 @@
               </view>
 
               <!-- 滑块 -->
-              <slider v-if="field.type === 'slider'" v-model="dynamicForm[field.key]" :min="field.min" :max="field.max"
-                show-value class="slider" />
+              <slider v-if="field.type === 'slider'" 
+                :value="Number(dynamicForm[field.key])" 
+                :min="field.min" 
+                :max="field.max"
+                show-value 
+                @change="(e) => onSliderChange(e, field.key)"
+                class="slider" />
 
               <!-- 文本域 -->
               <textarea v-if="field.type === 'textarea'" v-model="dynamicForm[field.key]"
@@ -107,233 +112,438 @@
 </template>
 
 <script setup>
-  import {
-    ref,
-    reactive,
-    computed
-  } from 'vue';
-  import {
-    recordConfigs
-  } from '@/utils/record.config.js';
+import {
+  ref,
+  reactive,
+  computed,
+  onMounted
+} from 'vue';
+import {
+  recordConfigs
+} from '@/utils/record.config.js';
+import { API_BASE_URL } from '@/utils/config.js';
 
+// 用于反向查找键
+const getTitleToKeyMap = computed(() => {
+  const map = {};
+  Object.entries(recordConfigs).forEach(([key, config]) => {
+    map[config.title] = key;
+  });
+  return map;
+});
 
-  // 用于反向查找键
-  const getTitleToKeyMap = computed(() => {
-    const map = {};
-    Object.entries(recordConfigs).forEach(([key, config]) => {
-      map[config.title] = key;
-    });
-    return map;
+// 控制手风琴展开状态
+const openSections = reactive({
+  weight: true,
+  mainFood: false,
+  waterIntake: false,
+  purineFood: false,
+  uricAcid: false,
+  urinePH: false,
+  liverFunction: false,
+  kidneyFunction: false,
+  bloodSugar: false,
+  bloodPressure: false,
+  bloodLipid: false,
+  attack: false,
+  tophi: false,
+  surgery: false,
+  jointFunction: false
+});
+
+// 用户记录数据 - 初始为空
+const userRecords = reactive({
+  weight: [],
+  mainFood: [],
+  waterIntake: [],
+  purineFood: [],
+  uricAcid: [],
+  urinePH: [],
+  liverFunction: [],
+  kidneyFunction: [],
+  bloodSugar: [],
+  bloodPressure: [],
+  bloodLipid: [],
+  attack: [],
+  tophi: [],
+  surgery: [],
+  jointFunction: []
+});
+
+// 控制新增记录弹窗的显示
+const showAddRecordModal = ref(false);
+const currentRecordType = ref('');
+const selectedDate = ref(formatDate(new Date()));
+const selectedTime = ref(formatTime(new Date()));
+const startDate = '2020-01-01';
+const endDate = '2030-12-31';
+const dynamicForm = reactive({});
+const currentFormFields = ref([]);
+const isLoading = ref(false);
+
+// 切换手风琴面板
+const toggleAccordion = (section) => {
+  openSections[section] = !openSections[section];
+};
+
+// 打开模态框并设置类型
+const openAddModal = (recordType) => {
+  currentRecordType.value = recordType;
+  
+  // Set current date and time as initial values
+  const now = new Date();
+  selectedDate.value = formatDate(now);
+  selectedTime.value = formatTime(now);
+  
+  // Clear form
+  Object.keys(dynamicForm).forEach(key => {
+    delete dynamicForm[key];
   });
 
-  // 控制手风琴展开状态
-  const openSections = reactive({
-    weight: true,
-    mainFood: false,
-    waterIntake: false,
-    purineFood: false,
-    uricAcid: false,
-    urinePH: false,
-    liverFunction: false,
-    kidneyFunction: false,
-    bloodSugar: false,
-    bloodPressure: false,
-    bloodLipid: false,
-    attack: false,
-    tophi: false,
-    surgery: false,
-    jointFunction: false
-  });
+  // Set current form fields
+  const recordKey = getTitleToKeyMap.value[recordType];
+  currentFormFields.value = recordConfigs[recordKey].fields;
 
-  // 用户记录数据 - 初始示例数据
-  const userRecords = reactive({
-    weight: [{
-        date: new Date('2025-04-18T10:30:00'),
-        value: 75.5
-      },
-      {
-        date: new Date('2025-04-15T09:00:00'),
-        value: 76.2
-      }
-    ],
-    mainFood: [{
-      date: new Date('2025-04-19T12:00:00'),
-      name: '米饭',
-      amount: '1碗'
-    }],
-    waterIntake: [{
-      date: new Date('2025-04-20T14:00:00'),
-      amount: 2000
-    }],
-    purineFood: [],
-    uricAcid: [{
-      date: new Date('2025-04-10T08:00:00'),
-      value: 420,
-      method: '血液检测'
-    }],
-    urinePH: [],
-    liverFunction: [],
-    kidneyFunction: [],
-    bloodSugar: [],
-    bloodPressure: [],
-    bloodLipid: [],
-    attack: [{
-      date: new Date('2025-04-05T20:00:00'),
-      duration: 6,
-      painScore: 8
-    }],
-    tophi: [],
-    surgery: [],
-    jointFunction: []
-  });
-
-  // 控制新增记录弹窗的显示
-  const showAddRecordModal = ref(false);
-  const currentRecordType = ref('');
-  const selectedDate = ref(formatDate(new Date()));
-  const selectedTime = ref(formatTime(new Date()));
-  const startDate = '2020-01-01';
-  const endDate = '2030-12-31';
-  const dynamicForm = reactive({});
-  const currentFormFields = ref([]);
-
-  // 切换手风琴面板
-  const toggleAccordion = (section) => {
-    openSections[section] = !openSections[section];
-  };
-
-  // 打开模态框并设置类型
-  const openAddModal = (recordType) => {
-    currentRecordType.value = recordType;
-    
-    // Set current date and time as initial values
-    const now = new Date();
-    selectedDate.value = formatDate(now);
-    selectedTime.value = formatTime(now);
-    
-    // Clear form
-    Object.keys(dynamicForm).forEach(key => {
-      delete dynamicForm[key];
-    });
-
-    // Set current form fields
-    const recordKey = getTitleToKeyMap.value[recordType];
-    currentFormFields.value = recordConfigs[recordKey].fields;
-
-    // Set slider default values
-    currentFormFields.value.forEach(field => {
-      if (field.type === 'slider') {
-        dynamicForm[field.key] = field.min + Math.floor((field.max - field.min) / 2);
-      }
-    });
-
-    showAddRecordModal.value = true;
-  };
-
-  // Format date to YYYY-MM-DD
-  function formatDate(date) {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  // Format time to HH:mm
-  function formatTime(date) {
-    const d = new Date(date);
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
-
-  // Handle date picker change
-  function onDateChange(e) {
-    selectedDate.value = e.detail.value;
-  }
-
-  // Handle time picker change
-  function onTimeChange(e) {
-    selectedTime.value = e.detail.value;
-  }
-
-  // 处理选择器变化
-  const handlePickerChange = (e, key) => {
-    const index = e.detail.value;
-    // 找到字段配置
-    const field = currentFormFields.value.find(f => f.key === key);
-    if (field && field.options) {
-      dynamicForm[key] = field.options[index];
+  // Set slider default values
+  currentFormFields.value.forEach(field => {
+    if (field.type === 'slider') {
+      // Make sure the slider value is properly initialized as a number
+      dynamicForm[field.key] = field.initial !== undefined ? Number(field.initial) : 
+                              (field.min !== undefined ? Number(field.min) : 0);
     }
-  };
+  });
 
-  // 格式化记录值显示
-  const formatRecordValue = (recordKey, item) => {
-    return recordConfigs[recordKey].formatter(item);
-  };
+  showAddRecordModal.value = true;
+};
 
-  // 添加记录
-  const addRecord = () => {
-    const recordKey = getTitleToKeyMap.value[currentRecordType.value];
-    if (!recordKey) return;
+// Format date to YYYY-MM-DD
+function formatDate(date) {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
-    // Combine date and time
-    const dateTimeStr = `${selectedDate.value} ${selectedTime.value}:00`;
-    const recordDate = new Date(dateTimeStr.replace(/-/g, '/'));
+// Format time to HH:mm
+function formatTime(date) {
+  const d = new Date(date);
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
 
-    // Validate date
-    if (isNaN(recordDate.getTime())) {
-      uni.showToast({
-        title: '请选择有效的日期和时间',
-        icon: 'none'
-      });
+// Handle date picker change
+function onDateChange(e) {
+  selectedDate.value = e.detail.value;
+}
+
+// Handle time picker change
+function onTimeChange(e) {
+  selectedTime.value = e.detail.value;
+}
+
+// 处理选择器变化
+const handlePickerChange = (e, key) => {
+  const index = e.detail.value;
+  // 找到字段配置
+  const field = currentFormFields.value.find(f => f.key === key);
+  if (field && field.options) {
+    dynamicForm[key] = field.options[index];
+  }
+};
+
+// Handle slider change
+function onSliderChange(e, key) {
+  // Ensure slider value is stored as a number
+  dynamicForm[key] = Number(e.detail.value);
+}
+
+// 格式化记录值显示
+const formatRecordValue = (recordKey, item) => {
+  return recordConfigs[recordKey].formatter(item);
+};
+
+// 加载记录数据
+const loadRecords = async () => {
+  try {
+    isLoading.value = true;
+    
+    // Get token from storage
+    const token = uni.getStorageSync('token');
+    if (!token) {
+      uni.redirectTo({ url: '/pages/login/login' });
       return;
     }
-
-    // Create new record
-    const newRecord = {
-      date: recordDate,
-      ...dynamicForm
-    };
-
-    // Add to records
-    userRecords[recordKey].push(newRecord);
     
-    // Sort records by date (newest first)
-    userRecords[recordKey].sort((a, b) => b.date.getTime() - a.date.getTime());
-
-    // Close modal
-    showAddRecordModal.value = false;
-
-    // Show success message
-    uni.showToast({
-      title: '添加成功',
-      icon: 'success'
+    console.log('Using token:', token); // Debug log
+    
+    const res = await uni.request({
+      url: `${API_BASE_URL}/records/`,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      withCredentials: true
     });
-  };
-
-  // 删除记录
-  const deleteRecord = (recordKey, index) => {
-    uni.showModal({
-      title: '确认删除',
-      content: '确定要删除这条记录吗？',
-      success: (res) => {
-        if (res.confirm) {
-          if (userRecords[recordKey] && userRecords[recordKey][index] !== undefined) {
-            userRecords[recordKey].splice(index, 1);
-          } else {
-            console.error("Could not find record to delete at key:", recordKey, "index:", index);
-            uni.showToast({
-              title: '删除失败',
-              icon: 'none'
-            });
+    
+    console.log('API response:', res.statusCode, res.data); // Debug log
+    
+    if (res.statusCode === 200 && res.data) {
+      // Clear existing records
+      Object.keys(userRecords).forEach(key => {
+        userRecords[key] = [];
+      });
+      
+      // Process and add records from API
+      Object.entries(res.data).forEach(([recordType, records]) => {
+        if (userRecords[recordType]) {
+          records.forEach(record => {
+            try {
+              // Ensure date is properly converted to a Date object
+              const recordDate = new Date(record.date);
+              
+              // Check if date is valid before adding
+              if (!isNaN(recordDate.getTime())) {
+                userRecords[recordType].push({
+                  id: record.id,
+                  date: recordDate,
+                  ...record
+                });
+              } else {
+                console.error('Invalid date format:', record.date);
+              }
+            } catch (err) {
+              console.error('Error processing record:', err, record);
+            }
+          });
+          
+          // Sort by date (newest first) with error handling
+          if (userRecords[recordType].length > 0) {
+            try {
+              userRecords[recordType].sort((a, b) => {
+                // Ensure both dates are valid
+                const dateA = a.date instanceof Date ? a.date.getTime() : 0;
+                const dateB = b.date instanceof Date ? b.date.getTime() : 0;
+                return dateB - dateA;
+              });
+            } catch (err) {
+              console.error('Error sorting records:', err);
+            }
           }
         }
-      }
+      });
+    } else if (res.statusCode === 401) {
+      // Handle unauthorized error
+      console.error('Authentication failed. Redirecting to login.');
+      uni.showToast({
+        title: '登录已过期，请重新登录',
+        icon: 'none'
+      });
+      
+      // Clear token and redirect to login
+      uni.removeStorageSync('token');
+      uni.removeStorageSync('isLoggedIn');
+      
+      setTimeout(() => {
+        uni.redirectTo({ url: '/pages/login/login' });
+      }, 1500);
+    }
+  } catch (error) {
+    console.error('加载记录失败:', error);
+    uni.showToast({
+      title: '加载记录失败，请检查网络连接',
+      icon: 'none'
     });
-  };
+  } finally {
+    isLoading.value = false;
+  }
+};
 
+// 添加记录
+const addRecord = async () => {
+  const recordKey = getTitleToKeyMap.value[currentRecordType.value];
+  if (!recordKey) return;
+
+  // Combine date and time
+  const dateTimeStr = `${selectedDate.value}T${selectedTime.value}:00`;
+  const recordDate = new Date(dateTimeStr);
+
+  // Validate date
+  if (isNaN(recordDate.getTime())) {
+    uni.showToast({
+      title: '请选择有效的日期和时间',
+      icon: 'none'
+    });
+    return;
+  }
   
+  try {
+    // Show loading
+    uni.showLoading({
+      title: '保存中...'
+    });
+    
+    // Get token from storage
+    const token = uni.getStorageSync('token');
+    if (!token) {
+      throw new Error('登录已过期，请重新登录');
+    }
+    
+    // Prepare data for API
+    const apiData = {
+      record_type: recordKey,
+      date: recordDate.toISOString(),
+      data: { ...dynamicForm }
+    };
+    
+    console.log('Sending data to API:', apiData); // Debug log
+    
+    // Send data to backend
+    const res = await uni.request({
+      url: `${API_BASE_URL}/records/`,
+      method: 'POST',
+      data: apiData,
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      withCredentials: true
+    });
+    
+    console.log('API response:', res.statusCode, res.data); // Debug log
+    
+    // Hide loading
+    uni.hideLoading();
+    
+    if (res.statusCode === 201) {
+      // Create new record for local display
+      const newRecord = {
+        id: res.data.id,
+        date: recordDate,
+        ...dynamicForm
+      };
+
+      // Add to records
+      userRecords[recordKey].push(newRecord);
+      
+      // Sort records by date (newest first)
+      userRecords[recordKey].sort(function(a, b) {
+        // Safely get timestamps for comparison
+        var dateA = a.date instanceof Date ? a.date.getTime() : 0;
+        var dateB = b.date instanceof Date ? b.date.getTime() : 0;
+        return dateB - dateA;
+      });
+
+      // Close modal
+      showAddRecordModal.value = false;
+
+      // Show success message
+      uni.showToast({
+        title: '添加成功',
+        icon: 'success'
+      });
+    } else if (res.statusCode === 401) {
+      // Handle unauthorized error
+      uni.showToast({
+        title: '登录已过期，请重新登录',
+        icon: 'none'
+      });
+      
+      setTimeout(() => {
+        uni.redirectTo({ url: '/pages/login/login' });
+      }, 1500);
+    } else {
+      throw new Error(res.data ? res.data.error : '保存失败');
+    }
+  } catch (error) {
+    uni.hideLoading();
+    uni.showToast({
+      title: error.message || '保存失败，请检查网络连接',
+      icon: 'none'
+    });
+    console.error('保存记录错误:', error);
+  }
+};
+
+// 删除记录
+const deleteRecord = (recordKey, index) => {
+  const record = userRecords[recordKey][index];
+  if (!record || !record.id) {
+    uni.showToast({
+      title: '记录ID不存在',
+      icon: 'none'
+    });
+    return;
+  }
+  
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除这条记录吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          // Show loading
+          uni.showLoading({
+            title: '删除中...'
+          });
+          
+          // Get token from storage
+          const token = uni.getStorageSync('token');
+          if (!token) {
+            throw new Error('登录已过期，请重新登录');
+          }
+          
+          // Send delete request to backend
+          const apiRes = await uni.request({
+            url: `${API_BASE_URL}/records/${record.id}/`,
+            method: 'DELETE',
+            header: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          // Hide loading
+          uni.hideLoading();
+          
+          if (apiRes.statusCode === 204) {
+            // Remove from local records
+            userRecords[recordKey].splice(index, 1);
+            
+            // Show success message
+            uni.showToast({
+              title: '删除成功',
+              icon: 'success'
+            });
+          } else {
+            throw new Error(apiRes.data ? apiRes.data.error : '删除失败');
+          }
+        } catch (error) {
+          uni.hideLoading();
+          uni.showToast({
+            title: error.message || '删除失败，请检查网络连接',
+            icon: 'none'
+          });
+          console.error('删除记录错误:', error);
+        }
+      }
+    }
+  });
+};
+
+// 页面加载时获取记录
+onMounted(() => {
+  const token = uni.getStorageSync('token');
+  if (!token) {
+    console.log('No token found, redirecting to login');
+    uni.redirectTo({ url: '/pages/login/login' });
+    return;
+  }
+  
+  console.log('Token found, loading records');
+  loadRecords();
+});
 </script>
 
 
