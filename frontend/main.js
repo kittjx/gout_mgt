@@ -13,52 +13,95 @@
     supportsModernJS = false;
   }
   
-  // Set a flag for the app to use
-  window.SUPPORTS_MODERN_JS = supportsModernJS;
+  // Set a flag for the app to use - check if window exists first
+  if (typeof window !== 'undefined') {
+    window.SUPPORTS_MODERN_JS = supportsModernJS;
+  } else if (typeof global !== 'undefined') {
+    // For WeChat Mini Program environment
+    global.SUPPORTS_MODERN_JS = supportsModernJS;
+  } else {
+    // Fallback for other environments
+    try {
+      this.SUPPORTS_MODERN_JS = supportsModernJS;
+    } catch (e) {
+      console.warn('Could not set SUPPORTS_MODERN_JS flag');
+    }
+  }
 })();
 
 // Add this at the top of the file
-window.addEventListener('error', function(event) {
-  console.error('Global error event:', event.error);
-  console.error('Error message:', event.message);
-  console.error('Error source:', event.filename, 'line:', event.lineno, 'col:', event.colno);
-  
-  // Log additional details for syntax errors
-  if (event.error instanceof SyntaxError) {
-    console.error('SyntaxError detected. This might be due to unsupported JavaScript features in this browser.');
-    console.error('Browser info:', navigator.userAgent);
-  }
-  
-  // Prevent the error from being reported to the console again
-  event.preventDefault();
-  
-  // Show error to user
-  uni.showToast({
-    title: 'An error occurred. Please try again.',
-    icon: 'none',
-    duration: 3000
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', function(event) {
+    console.error('Global error event:', event.error);
+    console.error('Error message:', event.message);
+    console.error('Error source:', event.filename, 'line:', event.lineno, 'col:', event.colno);
+    
+    // Log additional details for syntax errors
+    if (event.error instanceof SyntaxError) {
+      console.error('SyntaxError detected. This might be due to unsupported JavaScript features in this browser.');
+      console.error('Browser info:', navigator.userAgent);
+    }
+    
+    // Prevent the error from being reported to the console again
+    event.preventDefault();
+    
+    // Show error to user
+    uni.showToast({
+      title: 'An error occurred. Please try again.',
+      icon: 'none',
+      duration: 3000
+    });
+    
+    return true;
   });
-  
-  return true;
-});
 
-// Add this for unhandled promise rejections
-window.addEventListener('unhandledrejection', function(event) {
-  console.error('Unhandled promise rejection:', event.reason);
-  console.error('Browser info:', navigator.userAgent);
-  
-  // Prevent the error from being reported to the console again
-  event.preventDefault();
-  
-  // Show error to user
-  uni.showToast({
-    title: 'An error occurred. Please try again.',
-    icon: 'none',
-    duration: 3000
+  // Add this for unhandled promise rejections
+  window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+    console.error('Browser info:', navigator.userAgent);
+    
+    // Prevent the error from being reported to the console again
+    event.preventDefault();
+    
+    // Show error to user
+    uni.showToast({
+      title: 'An error occurred. Please try again.',
+      icon: 'none',
+      duration: 3000
+    });
+    
+    return true;
   });
-  
-  return true;
-});
+}
+
+// Add WeChat Mini Program specific error handler
+if (typeof wx !== 'undefined') {
+  try {
+    // Global error handler for WeChat Mini Program
+    wx.onError(function(error) {
+      console.error('WeChat Mini Program error:', error);
+      
+      uni.showToast({
+        title: 'An error occurred. Please try again.',
+        icon: 'none',
+        duration: 3000
+      });
+    });
+    
+    // Unhandled promise rejection handler for WeChat Mini Program
+    wx.onUnhandledRejection(function(res) {
+      console.error('WeChat Mini Program unhandled rejection:', res.reason);
+      
+      uni.showToast({
+        title: 'An error occurred. Please try again.',
+        icon: 'none',
+        duration: 3000
+      });
+    });
+  } catch (e) {
+    console.error('Failed to set up WeChat error handlers:', e);
+  }
+}
 
 import App from './App'
 
