@@ -298,7 +298,7 @@ const loadBasicInfo = async () => {
     uni.showLoading({ title: '加载中...' });
     
     const res = await uni.request({
-      url: `${API_BASE_URL}/condition/basic/`,
+      url: `${API_BASE_URL}/condition/`,
       method: 'GET',
       header: {
         'Authorization': `Bearer ${token}`
@@ -331,7 +331,7 @@ const saveBasicInfo = async () => {
     uni.showLoading({ title: '保存中...' });
 
     const res = await uni.request({
-      url: `${API_BASE_URL}/condition/basic/`,
+      url: `${API_BASE_URL}/condition/`,
       method: 'POST',
       header: {
         'Authorization': `Bearer ${token}`,

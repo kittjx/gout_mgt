@@ -215,7 +215,7 @@ const savePersonalInfo = async () => {
     
     // Send data to backend
     const res = await uni.request({
-      url: `${API_BASE_URL}/patient/profile/`,
+      url: `${API_BASE_URL}/profiles/`,
       method: 'POST',
       data: personalInfo,
       header: {
@@ -269,7 +269,7 @@ onMounted(async () => {
     
     // Fetch data from API
     const res = await uni.request({
-      url: `${API_BASE_URL}/patient/profile/`,
+      url: `${API_BASE_URL}/profiles/`,
       method: 'GET',
       header: {
         'Authorization': `Bearer ${token}`,
