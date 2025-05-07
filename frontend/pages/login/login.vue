@@ -14,8 +14,8 @@
       <view class="form-item">
         <text class="label">密码</text>
         <view class="input-wrapper">
-            <input class="input" placeholder="请输入密码" :password="!showPassword" />
-            <text class="password-toggle" @click="togglePasswordVisibility">{{ showPassword ? '隐藏' : '显示' }}</text>
+          <input class="input" placeholder="请输入密码" :password="!showPassword" v-model="password" />
+          <text class="password-toggle" @tap="togglePasswordVisibility">{{ showPassword ? '隐藏' : '显示' }}</text>
         </view>
       </view>
 
@@ -214,23 +214,30 @@
         margin-bottom: 12rpx;
       }
 
+      .input-wrapper {
+        position: relative;
+        width: 100%;
+      }
+      
       .input {
         width: 100%;
         height: 80rpx;
         background-color: #f5f7fa;
         border-radius: 8rpx;
-        padding: 0 20rpx;
+        padding: 0 100rpx 0 20rpx; /* Add right padding to make room for the toggle */
         font-size: 28rpx;
         color: #333;
         box-sizing: border-box;
       }
-
+      
       .password-toggle {
         position: absolute;
         right: 20rpx;
-        bottom: 24rpx;
+        top: 50%;
+        transform: translateY(-50%);
         font-size: 26rpx;
         color: #42b983;
+        z-index: 2; /* Ensure it's above the input */
       }
     }
 
