@@ -13,10 +13,10 @@
 
       <view class="form-item">
         <text class="label">密码</text>
-        <input class="input" :type="showPassword ? 'text' : 'password'" placeholder="请输入密码" v-model="password" />
-        <text class="password-toggle" @tap="togglePasswordVisibility">
-          {{ showPassword ? '隐藏' : '显示' }}
-        </text>
+        <view class="input-wrapper">
+            <input class="input" placeholder="请输入密码" :password="!showPassword" />
+            <text class="password-toggle" @click="togglePasswordVisibility">{{ showPassword ? '隐藏' : '显示' }}</text>
+        </view>
       </view>
 
       <view class="login-options">
@@ -57,6 +57,7 @@
   // 显示/隐藏密码
   const togglePasswordVisibility = () => {
     showPassword.value = !showPassword.value;
+    console.log('show password: ', showPassword.value);
   };
 
   // 登录处理
