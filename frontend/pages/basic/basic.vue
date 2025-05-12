@@ -163,7 +163,7 @@
         <text class="label">主要限制食物</text>
         <checkbox-group @change="onLimitFoodChange">
           <label class="checkbox-item" v-for="(item, index) in limitFoodOptions" :key="index">
-            <checkbox :value="item" :checked="basicInfo.limit_foods.includes(item)" color="#42b983" />
+            <checkbox :value="item" :checked="limitFoods.includes(item)" color="#42b983" />
             <text>{{ item }}</text>
           </label>
         </checkbox-group>
@@ -179,25 +179,25 @@
       <view class="form-item">
         <text class="label">是否有并发症</text>
         <checkbox-group @change="onComplicationsChange">
-          <label class="checkbox-item" v-for="(item, index) in complicationsOptions" :key="index">
-            <checkbox :value="item.value" :checked="basicInfo.complications.includes(item.value)" color="#42b983" />
+          <label class="checkbox-item" v-for="(item, index) in complicationOptions" :key="index">
+            <checkbox :value="item.value" :checked="hasComplication(item.value)" color="#42b983" />
             <text>{{ item.label }}</text>
           </label>
         </checkbox-group>
       </view>
       
-      <view class="form-item complications-details" v-if="basicInfo.complications.length > 0">
+      <view class="form-item complications-details" v-if="complications.length > 0">
         <text class="label">并发症确诊时间</text>
-        <view class="complication-item" v-for="(item, index) in basicInfo.complications" :key="index">
-          <text class="complication-name">{{ getComplicationLabel(item) }}</text>
+        <view class="complication-item" v-for="comp in complications" :key="comp.id">
+          <text class="complication-name">{{ getComplicationLabel(comp.name) }}</text>
           <picker 
             mode="date" 
-            :value="basicInfo.complication_dates[item]" 
-            @change="e => onComplicationDateChange(item, e.detail.value)"
+            :value="comp.diagnosis_date" 
+            @change="e => onComplicationDateChange(comp.id, e.detail.value)"
             :end="today"
           >
             <view class="picker-value">
-              <text>{{ basicInfo.complication_dates[item] || '请选择确诊时间' }}</text>
+              <text>{{ comp.diagnosis_date || '请选择确诊时间' }}</text>
               <view class="arrow-right"></view>
             </view>
           </picker>
@@ -211,7 +211,7 @@
           <text>添加药物</text>
         </view>
         
-        <view class="medicine-item" v-for="(item, index) in basicInfo.medicines" :key="index">
+        <view class="medicine-item" v-for="(med, index) in medicines" :key="med.id || index">
           <view class="medicine-header">
             <text class="medicine-title">药物 {{ index + 1 }}</text>
             <text class="delete-btn" @tap="deleteMedicine(index)">删除</text>
@@ -224,7 +224,7 @@
                 class="input" 
                 type="text" 
                 placeholder="请输入药名" 
-                v-model="item.name"
+                v-model="med.name"
               />
             </view>
             
@@ -234,8 +234,23 @@
                 class="input" 
                 type="text" 
                 placeholder="请输入剂量" 
-                v-model="item.dosage"
+                v-model="med.dosage"
               />
+            </view>
+            
+            <view class="sub-item">
+              <text class="sub-label">开始时间</text>
+              <picker 
+                mode="date" 
+                :value="med.start_date" 
+                @change="e => onMedicineStartDateChange(med.id || index, e.detail.value)"
+                :end="today"
+              >
+                <view class="picker-value">
+                  <text>{{ med.start_date || '请选择开始时间' }}</text>
+                  <view class="arrow-right"></view>
+                </view>
+              </picker>
             </view>
           </view>
         </view>
@@ -252,6 +267,15 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { API_BASE_URL } from '@/utils/config.js';
 import LogoutButton from '@/components/LogoutButton.vue';
 
+// Complication options
+const complicationOptions = [
+  { label: '高血压', value: 'hypertension' },
+  { label: '糖尿病', value: 'diabetes' },
+  { label: '肾病', value: 'kidney_disease' },
+  { label: '心脏病', value: 'heart_disease' }
+];
+
+// Basic info data
 const basicInfo = reactive({
   diagnosis_date: '',
   first_attack_date: '',
@@ -263,11 +287,12 @@ const basicInfo = reactive({
   soda_frequency: '',
   limit_purine: false,
   limit_purine_date: '',
-  limit_foods: [],
-  complications: [],
-  complication_dates: {},
-  medicines: []
 });
+
+// Separate reactive arrays for related data
+const complications = ref([]);
+const medicines = ref([]);
+const limitFoods = ref([]);
 
 const attackFrequencyOptions = ['每月1次以下', '每月1-2次', '每月3次以上'];
 const attackFrequencyIndex = ref(0);
@@ -275,18 +300,106 @@ const sodaFrequencyOptions = ['每天', '每周几次', '偶尔'];
 const sodaFrequencyIndex = ref(0);
 const goutTypeOptions = ['代谢障碍型', '生成过多型', '混合型'];
 const limitFoodOptions = ['海鲜', '动物内脏', '啤酒', '红肉'];
-const complicationsOptions = [
-  { value: 'hypertension', label: '高血压' }, 
-  { value: 'diabetes', label: '糖尿病' }, 
-  { value: 'kidney_disease', label: '肾病' }, 
-  { value: 'heart_disease', label: '心脏病' }]
-;
 
 const today = computed(() => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 });
 
+// Check if a complication exists
+const hasComplication = (value) => {
+  return complications.value.some(comp => comp.name === value);
+};
+
+// Get the label for a complication value
+const getComplicationLabel = (value) => {
+  const option = complicationOptions.find(opt => opt.value === value);
+  return option ? option.label : value;
+};
+
+// Handle complications change
+const onComplicationsChange = (e) => {
+  const selectedValues = e.detail.value;
+  
+  // Remove complications that are no longer selected
+  complications.value = complications.value.filter(comp => 
+    selectedValues.includes(comp.name)
+  );
+  
+  // Add newly selected complications
+  selectedValues.forEach(value => {
+    if (!hasComplication(value)) {
+      complications.value.push({
+        id: Date.now() + Math.random(), // Temporary ID for frontend
+        name: value,
+        diagnosis_date: ''
+      });
+    }
+  });
+};
+
+// Handle complication date change
+const onComplicationDateChange = (compId, date) => {
+  const comp = complications.value.find(c => c.id === compId);
+  if (comp) {
+    comp.diagnosis_date = date;
+  }
+};
+
+// Handle medicine start date change
+const onMedicineStartDateChange = (medicineId, date) => {
+  const med = medicines.value.find((m, idx) => m.id === medicineId || idx === medicineId);
+  if (med) {
+    med.start_date = date;
+  }
+};
+
+// Add a new medicine
+const addMedicine = () => {
+  medicines.value.push({
+    id: Date.now() + Math.random(), // Temporary ID for frontend
+    name: '',
+    dosage: '',
+    start_date: ''
+  });
+};
+
+// Delete a medicine
+const deleteMedicine = (index) => {
+  if (index >= 0 && index < medicines.value.length) {
+    medicines.value.splice(index, 1);
+  }
+};
+
+// Handle limit food change
+const onLimitFoodChange = (e) => {
+  limitFoods.value = e.detail.value;
+};
+
+// Handle attack frequency change
+const onAttackFrequencyChange = (e) => {
+  const index = e.detail.value;
+  basicInfo.attack_frequency = attackFrequencyOptions[index];
+  attackFrequencyIndex.value = index;
+};
+
+// Handle soda frequency change
+const onSodaFrequencyChange = (e) => {
+  const index = e.detail.value;
+  basicInfo.soda_frequency = sodaFrequencyOptions[index];
+  sodaFrequencyIndex.value = index;
+};
+
+// Update picker indexes based on current values
+const updatePickerIndexes = () => {
+  const afIndex = attackFrequencyOptions.findIndex(item => item === basicInfo.attack_frequency);
+  if (afIndex !== -1) attackFrequencyIndex.value = afIndex;
+  
+  const sfIndex = sodaFrequencyOptions.findIndex(item => item === basicInfo.soda_frequency);
+  if (sfIndex !== -1) sodaFrequencyIndex.value = sfIndex;
+};
+
+// Load basic info from API
 const loadBasicInfo = async () => {
   try {
     const token = uni.getStorageSync('token');
@@ -308,7 +421,38 @@ const loadBasicInfo = async () => {
     uni.hideLoading();
 
     if (res.statusCode === 200 && res.data) {
-      Object.assign(basicInfo, res.data);
+      // Update basic info
+      Object.keys(basicInfo).forEach(key => {
+        if (res.data[key] !== undefined) {
+          basicInfo[key] = res.data[key];
+        }
+      });
+      
+      // Update complications
+      if (res.data.complications && Array.isArray(res.data.complications)) {
+        complications.value = res.data.complications.map(comp => ({
+          id: comp.id || Date.now() + Math.random(),
+          name: comp.name,
+          diagnosis_date: comp.diagnosis_date || ''
+        }));
+      }
+      
+      // Update medicines
+      if (res.data.medicines && Array.isArray(res.data.medicines)) {
+        medicines.value = res.data.medicines.map(med => ({
+          id: med.id || Date.now() + Math.random(),
+          name: med.name || '',
+          dosage: med.dosage || '',
+          start_date: med.start_date || ''
+        }));
+      }
+      
+      // Update limit foods
+      if (res.data.limit_foods && Array.isArray(res.data.limit_foods)) {
+        limitFoods.value = res.data.limit_foods.map(item => item.name);
+      }
+      
+      // Update picker indexes
       updatePickerIndexes();
     }
   } catch (error) {
@@ -317,9 +461,11 @@ const loadBasicInfo = async () => {
       title: '加载失败',
       icon: 'none'
     });
+    console.error('加载基础信息错误:', error);
   }
 };
 
+// Save basic info to API
 const saveBasicInfo = async () => {
   try {
     const token = uni.getStorageSync('token');
@@ -328,7 +474,51 @@ const saveBasicInfo = async () => {
       return;
     }
 
+    // Validate data
+    if (basicInfo.limit_purine && !basicInfo.limit_purine_date) {
+      uni.showToast({
+        title: '请选择限制高嘌呤食物的开始时间',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // Validate complications have dates
+    const missingDates = complications.value.filter(comp => !comp.diagnosis_date);
+    if (missingDates.length > 0) {
+      uni.showToast({
+        title: '请为所有并发症选择确诊时间',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // Validate medicines
+    const incompleteMedicines = medicines.value.filter(med => !med.name || !med.dosage);
+    if (incompleteMedicines.length > 0) {
+      uni.showToast({
+        title: '请完善所有药物的信息',
+        icon: 'none'
+      });
+      return;
+    }
+
     uni.showLoading({ title: '保存中...' });
+
+    // Prepare data for API
+    const dataToSend = {
+      ...basicInfo,
+      complication_data: complications.value.map(comp => ({
+        name: comp.name,
+        diagnosis_date: comp.diagnosis_date
+      })),
+      medicine_data: medicines.value.map(med => ({
+        name: med.name,
+        dosage: med.dosage,
+        start_date: med.start_date || ''
+      })),
+      limit_food_names: limitFoods.value
+    };
 
     const res = await uni.request({
       url: `${API_BASE_URL}/condition/`,
@@ -337,77 +527,61 @@ const saveBasicInfo = async () => {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      data: basicInfo  // We can now send basicInfo directly
+      data: dataToSend
     });
 
-    uni.hideLoading();
+        uni.hideLoading();
 
     if (res.statusCode === 200) {
       uni.showToast({
         title: '保存成功',
         icon: 'success'
       });
+
+      // Update local data with response data
+      if (res.data) {
+        // Update basic info
+        Object.keys(basicInfo).forEach(key => {
+          if (res.data[key] !== undefined) {
+            basicInfo[key] = res.data[key];
+          }
+        });
+        
+        // Update complications
+        if (res.data.complications && Array.isArray(res.data.complications)) {
+          complications.value = res.data.complications.map(comp => ({
+            id: comp.id || Date.now() + Math.random(),
+            name: comp.name,
+            diagnosis_date: comp.diagnosis_date || ''
+          }));
+        }
+        
+        // Update medicines
+        if (res.data.medicines && Array.isArray(res.data.medicines)) {
+          medicines.value = res.data.medicines.map(med => ({
+            id: med.id || Date.now() + Math.random(),
+            name: med.name || '',
+            dosage: med.dosage || '',
+            start_date: med.start_date || ''
+          }));
+        }
+        
+        // Update limit foods
+        if (res.data.limit_foods && Array.isArray(res.data.limit_foods)) {
+          limitFoods.value = res.data.limit_foods.map(item => item.name);
+        }
+      }
     } else {
-      throw new Error('保存失败');
+      throw new Error((res.data && res.data.error) || '保存失败');
     }
   } catch (error) {
     uni.hideLoading();
     uni.showToast({
-      title: '保存失败',
+      title: error.message || '保存失败',
       icon: 'none'
     });
+    console.error('保存基础信息错误:', error);
   }
-};
-
-const updatePickerIndexes = () => {
-  const afIndex = attackFrequencyOptions.findIndex(item => item === basicInfo.attack_frequency);
-  if (afIndex !== -1) attackFrequencyIndex.value = afIndex;
-  
-  const sfIndex = sodaFrequencyOptions.findIndex(item => item === basicInfo.soda_frequency);
-  if (sfIndex !== -1) sodaFrequencyIndex.value = sfIndex;
-};
-
-const onAttackFrequencyChange = (e) => {
-  const index = e.detail.value;
-  basicInfo.attack_frequency = attackFrequencyOptions[index];
-  attackFrequencyIndex.value = index;
-};
-
-const onSodaFrequencyChange = (e) => {
-  const index = e.detail.value;
-  basicInfo.soda_frequency = sodaFrequencyOptions[index];
-  sodaFrequencyIndex.value = index;
-};
-
-const onLimitFoodChange = (e) => {
-  basicInfo.limit_foods = e.detail.value;
-};
-
-const onComplicationsChange = (e) => {
-  basicInfo.complications = e.detail.value;
-};
-
-const getComplicationLabel = (value) => {
-  const option = complicationsOptions.find(opt => opt.value === value);
-  return option ? option.label : value;
-};
-
-const addMedicine = () => {
-  basicInfo.medicines.push({
-    name: '',
-    dosage: ''
-  });
-};
-
-const deleteMedicine = (index) => {
-  basicInfo.medicines.splice(index, 1);
-};
-
-const onComplicationDateChange = (complication, date) => {
-  if (!basicInfo.complication_dates) {
-    basicInfo.complication_dates = {};
-  }
-  basicInfo.complication_dates[complication] = date;
 };
 
 onMounted(() => {
@@ -597,7 +771,8 @@ onMounted(() => {
           .sub-label {
             font-size: 26rpx;
             color: #666;
-            width: 80rpx;
+            width: 120rpx;
+            white-space: nowrap;
           }
           
           .input {

@@ -13,12 +13,34 @@ class BasicCondition(models.Model):
     soda_frequency = models.CharField(max_length=50, blank=True)
     limit_purine = models.BooleanField(default=False)
     limit_purine_date = models.DateField(null=True, blank=True)
-    limit_foods = models.JSONField(default=list, blank=True)
-    complications = models.JSONField(default=list, blank=True)
-    complication_dates = models.JSONField(default=dict, blank=True)
-    medicines = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'basic_condition'
+
+class LimitFood(models.Model):
+    basic_condition = models.ForeignKey(BasicCondition, on_delete=models.CASCADE, related_name='limit_foods')
+    name = models.CharField(max_length=100)
+    
+    class Meta:
+        db_table = 'limit_food'
+        unique_together = ['basic_condition', 'name']
+
+class Complication(models.Model):
+    basic_condition = models.ForeignKey(BasicCondition, on_delete=models.CASCADE, related_name='complications')
+    name = models.CharField(max_length=100)
+    diagnosis_date = models.DateField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'complication'
+        unique_together = ['basic_condition', 'name']
+
+class Medicine(models.Model):
+    basic_condition = models.ForeignKey(BasicCondition, on_delete=models.CASCADE, related_name='medicines')
+    name = models.CharField(max_length=100)
+    dosage = models.CharField(max_length=100)
+    start_date = models.DateField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'medicine'
