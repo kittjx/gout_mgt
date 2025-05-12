@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import BasicCondition, LimitFood, Complication, Medicine
+from .models import BasicCondition, LimitFood, Complication, Medicine, PatientConditionView
 
 class LimitFoodSerializer(serializers.ModelSerializer):
     class Meta:
@@ -128,3 +128,8 @@ class BasicConditionSerializer(serializers.ModelSerializer):
                 )
         
         return instance
+
+class PatientConditionViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientConditionView
+        fields = '__all__'

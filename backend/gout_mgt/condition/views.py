@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from accounts.auth import TokenAuthentication
 from .models import BasicCondition
 from .serializers import BasicConditionSerializer
@@ -80,5 +80,57 @@ class BasicConditionView(APIView):
             logger.error(f"Error saving basic condition: {str(e)}")
             return Response(
                 {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class PatientConditionViewSet(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            # Get condition for the current user
+            condition = PatientConditionView.objects.filter(user_id=request.user.id).first()
+            
+            if not condition:
+                return Response({}, status=status.HTTP_200_OK)
+            
+            serializer = PatientConditionViewSerializer(condition)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error fetching patient condition view: {str(e)}")
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+# Create a separate view for admin-only access
+class AdminPatientConditionViewSet(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]
+    
+    def get(self, request):
+        try:
+            conditions = PatientConditionView.objects.all()
+            
+            # Apply filtering if provided
+            gout_type = request.query_params.get('gout_type')
+            has_complications = request.query_params.get('has_complications')
+            
+            if gout_type:
+                conditions = conditions.filter(gout_type=gout_type)
+            
+            if has_complications == 'true':
+                # Filter to only include patients with complications
+                conditions = [c for c in conditions if len(c.complications) > 0]
+            
+            serializer = PatientConditionViewSerializer(conditions, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error fetching all patient conditions: {str(e)}")
+            return Response(
+                {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

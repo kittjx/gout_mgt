@@ -3,7 +3,7 @@ from .models import (
     Record, WeightRecord, MainFoodRecord, WaterIntakeRecord, 
     PurineFoodRecord, UricAcidRecord, UrinePHRecord, LiverFunctionRecord,
     KidneyFunctionRecord, BloodSugarRecord, BloodPressureRecord, BloodLipidRecord,
-    AttackRecord, TophiRecord, SurgeryRecord, JointFunctionRecord
+    AttackRecord, TophiRecord, SurgeryRecord, JointFunctionRecord, UserRecordsView
 )
 
 class RecordSerializer(serializers.ModelSerializer):
@@ -131,3 +131,8 @@ class JointFunctionRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = JointFunctionRecord
         fields = ['record_id', 'date', 'joint', 'description']
+
+class UserRecordsViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserRecordsView
+        fields = '__all__'

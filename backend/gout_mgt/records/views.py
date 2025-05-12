@@ -356,3 +356,41 @@ class RecordView(APIView):
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class UserRecordsViewSet(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            # Get records for the current user
+            records = UserRecordsView.objects.filter(user_id=request.user.id)
+            
+            # Apply date filtering if provided
+            start_date = request.query_params.get('start_date')
+            end_date = request.query_params.get('end_date')
+            record_type = request.query_params.get('record_type')
+            
+            if start_date:
+                records = records.filter(date__gte=start_date)
+            
+            if end_date:
+                records = records.filter(date__lte=end_date)
+            
+            if record_type:
+                records = records.filter(record_type=record_type)
+            
+            # Paginate results
+            paginator = PageNumberPagination()
+            paginator.page_size = 50  # Adjust as needed
+            result_page = paginator.paginate_queryset(records, request)
+            
+            serializer = UserRecordsViewSerializer(result_page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+            
+        except Exception as e:
+            logger.error(f"Error fetching user records view: {str(e)}")
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

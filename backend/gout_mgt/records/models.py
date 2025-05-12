@@ -80,3 +80,74 @@ class JointFunctionRecord(models.Model):
     record = models.OneToOneField(Record, on_delete=models.CASCADE, primary_key=True, related_name='joint_function_data')
     joint = models.CharField(max_length=50)  # 关节
     description = models.CharField(max_length=50)  # 描述
+
+class UserRecordsView(models.Model):
+    """
+    This is a database view model that represents the user_records_view.
+    It's a read-only model that combines all record types for easier querying.
+    """
+    record_id = models.IntegerField(primary_key=True)
+    user_id = models.IntegerField()
+    user_phone = models.CharField(max_length=11)
+    record_type = models.CharField(max_length=50)
+    date = models.DateTimeField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    
+    # Weight data
+    weight_value = models.DecimalField(max_digits=5, decimal_places=2, null=True)
+    
+    # Main food data
+    main_food_name = models.CharField(max_length=100, null=True)
+    main_food_amount = models.CharField(max_length=100, null=True)
+    
+    # Water intake data
+    water_intake_amount = models.CharField(max_length=100, null=True)
+    
+    # Purine food data
+    purine_food_type = models.CharField(max_length=100, null=True)
+    purine_food_amount = models.CharField(max_length=100, null=True)
+    
+    # Uric acid data
+    uric_acid_value = models.CharField(max_length=100, null=True)
+    uric_acid_method = models.CharField(max_length=20, null=True)
+    
+    # Urine pH data
+    urine_ph_value = models.CharField(max_length=100, null=True)
+    
+    # Liver function data
+    liver_function_value = models.CharField(max_length=100, null=True)
+    
+    # Kidney function data
+    kidney_function_value = models.CharField(max_length=100, null=True)
+    
+    # Blood sugar data
+    blood_sugar_value = models.CharField(max_length=100, null=True)
+    
+    # Blood pressure data
+    blood_pressure_value = models.CharField(max_length=100, null=True)
+    
+    # Blood lipid data
+    blood_lipid_value = models.CharField(max_length=100, null=True)
+    
+    # Attack data
+    attack_pain_score = models.IntegerField(null=True)
+    attack_duration = models.DecimalField(max_digits=5, decimal_places=2, null=True)
+    
+    # Tophi data
+    tophi_location = models.CharField(max_length=100, null=True)
+    tophi_size = models.CharField(max_length=50, null=True)
+    
+    # Surgery data
+    surgery_location = models.CharField(max_length=100, null=True)
+    surgery_notes = models.TextField(null=True)
+    
+    # Joint function data
+    joint_function_joint = models.CharField(max_length=50, null=True)
+    joint_function_description = models.CharField(max_length=50, null=True)
+    
+    class Meta:
+        managed = False  # This model is a database view, not a real table
+        db_table = 'user_records_view'
+        verbose_name = '用户记录视图'
+        verbose_name_plural = '用户记录视图'
