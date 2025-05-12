@@ -12,7 +12,7 @@
             <text>暂无记录，点击下方的 "+" 添加</text>
           </view>
           <view v-else class="record-list">
-            <view v-for="(item, index) in userRecords[key]" :key="index" class="record-item">
+            <view v-for="(item, index) in userRecords[key]" :key="item.record_id" class="record-item">
               <view class="record-info">
                 <view>
                   <text class="record-date">{{ formatDate(item.date) }}</text>
@@ -21,7 +21,7 @@
                 <view><text class="record-value">{{ formatRecordValue(key, item) }}</text></view>
               </view>
               <view class="record-actions">
-                <text class="delete-btn" @click="deleteRecord(key, index)">删除</text>
+                <text class="delete-btn" @click="deleteRecord(key, item.record_id)">删除</text>
               </view>
             </view>
           </view>
@@ -310,7 +310,7 @@ const loadRecords = async () => {
               // Check if date is valid before adding
               if (!isNaN(recordDate.getTime())) {
                 userRecords[recordType].push({
-                  id: record.id,
+                  record_id: record.record_id,
                   date: recordDate,
                   ...record
                 });
@@ -423,7 +423,7 @@ const addRecord = async () => {
     if (res.statusCode === 201) {
       // Create new record for local display
       const newRecord = {
-        id: res.data.id,
+        record_id: res.data.record_id,
         date: recordDate,
         ...dynamicForm
       };
@@ -471,15 +471,18 @@ const addRecord = async () => {
 };
 
 // 删除记录
-const deleteRecord = (recordKey, index) => {
-  const record = userRecords[recordKey][index];
-  if (!record || !record.id) {
+const deleteRecord = (recordKey, recordId) => {
+  const recordIndex = userRecords[recordKey].findIndex(record => record.record_id === recordId);
+  
+  if (recordIndex === -1) {
     uni.showToast({
-      title: '记录ID不存在',
+      title: '记录不存在',
       icon: 'none'
     });
     return;
   }
+  
+  const record = userRecords[recordKey][recordIndex];
   
   uni.showModal({
     title: '确认删除',
@@ -500,7 +503,7 @@ const deleteRecord = (recordKey, index) => {
           
           // Send delete request to backend
           const apiRes = await uni.request({
-            url: `${API_BASE_URL}/records/${record.id}/`,
+            url: `${API_BASE_URL}/records/${recordId}/`,
             method: 'DELETE',
             header: {
               'Authorization': `Bearer ${token}`
@@ -511,8 +514,8 @@ const deleteRecord = (recordKey, index) => {
           uni.hideLoading();
           
           if (apiRes.statusCode === 204) {
-            // Remove from local records
-            userRecords[recordKey].splice(index, 1);
+            // Remove from local records using the found index
+            userRecords[recordKey].splice(recordIndex, 1);
             
             // Show success message
             uni.showToast({
@@ -726,7 +729,6 @@ onMounted(() => {
 }
 
 .textarea {
-  width: 100%;
   height: 100px;
   padding: 12px;
   background-color: #f7f7f7;

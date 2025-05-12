@@ -109,21 +109,21 @@ export const recordConfigs = reactive({
     title: '发作情况',
     fields: [
       { label: '持续时间 (小时)', key: 'duration', type: 'digit', placeholder: '请输入发作持续时间' },
-      { label: '疼痛评分 (0-10)', key: 'painScore', type: 'slider', min: 0, max: 10, initial: 5 }
+      { label: '疼痛评分 (0-10)', key: 'pain_score', type: 'slider', min: 0, max: 10, initial: 5 }
     ],
-    formatter: (item) => `持续: ${item.duration}小时, 疼痛评分: ${item.painScore}/10`,
+    formatter: (item) => `持续: ${item.duration}小时, 疼痛评分: ${item.pain_score}/10`,
     validator: (form) => form.duration && !isNaN(parseFloat(form.duration)),
-    processor: (form, date) => ({ date, duration: parseFloat(form.duration), painScore: parseInt(form.painScore) || 5 })
+    processor: (form, date) => ({ date, duration: parseFloat(form.duration), painScore: parseInt(form.pain_score) || 5 })
   },
   tophi: {
     title: '痛风石情况',
     fields: [
       { label: '部位', key: 'location', type: 'text', placeholder: '例如: 左脚大拇指' },
-      { label: '直径 (mm)', key: 'diameter', type: 'digit', placeholder: '请输入直径' }
+      { label: '直径 (mm)', key: 'size', type: 'digit', placeholder: '请输入直径' }
     ],
-    formatter: (item) => `${item.location}: ${item.diameter}mm`,
-    validator: (form) => form.location && form.diameter && !isNaN(parseFloat(form.diameter)),
-    processor: (form, date) => ({ date, location: form.location, diameter: parseFloat(form.diameter) })
+    formatter: (item) => `${item.location}: ${item.size}mm`,
+    validator: (form) => form.location && form.size && !isNaN(parseFloat(form.size)),
+    processor: (form, date) => ({ date, location: form.location, diameter: parseFloat(form.size) })
   },
   surgery: {
     title: '痛风石手术',
@@ -131,7 +131,7 @@ export const recordConfigs = reactive({
       { label: '手术部位', key: 'location', type: 'text', placeholder: '请输入手术部位' },
       { label: '备注', key: 'notes', type: 'textarea', placeholder: '请输入备注信息（选填）' }
     ],
-    formatter: (item) => `${item.location}`,
+    formatter: (item) => `${item.location} ${item.notes} `,
     validator: (form) => form.location,
     processor: (form, date) => ({ date, location: form.location, notes: form.notes || '' })
   },

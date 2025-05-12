@@ -3,5 +3,5 @@ from .views import RecordView
 
 urlpatterns = [
     path('', RecordView.as_view(), name='records'),
-    path('<int:record_id>/', RecordView.as_view(), name='record-detail'),
+    path('<int:record_id>/', RecordView.as_view(), name='record_detail'),
 ]
