@@ -1,33 +1,46 @@
 
 services:
   django:
-    image: django-dev
+    image: gout-api
     build: .
-    container_name: django-dev
+    container_name: gout-api
+    restart: always
+    volumes:
+      - ./static:/code/gout_mgt/staticfiles
     ports:
       - "8000:8000"
-    volumes:
-      - .:/code
-    working_dir: /code
-    tty: true
-    depends_on:
-      - db
     environment:
       DJANGO_DB_HOST: db
-      DJANGO_DB_NAME: devdb
-      DJANGO_DB_USER: devuser
-      DJANGO_DB_PASSWORD: devpass
+      DJANGO_DB_NAME: proddb
+      DJANGO_DB_USER: produser
+      DJANGO_DB_PASSWORD: prodpass
+    depends_on:
+      - db
 
   db:
     image: mysql:9
-    container_name: mysql-dev
-    restart: unless-stopped
+    container_name: mysql-prod
+    restart: always
     environment:
-      MYSQL_DATABASE: devdb
-      MYSQL_USER: devuser
-      MYSQL_PASSWORD: devpass
+      MYSQL_DATABASE: proddb
+      MYSQL_USER: produser
+      MYSQL_PASSWORD: prodpass
       MYSQL_ROOT_PASSWORD: rootpass
-    ports:
-      - "3306:3306"
+      MYSQL_ROOT_HOST: '%'  # Allow root connections from any host
+      MYSQL_HOST: '%'       # Allow user connections from any host
     volumes:
       - ./db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./static:/var/www/static
+    depends_on:
+      - django
