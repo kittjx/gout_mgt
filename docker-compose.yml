@@ -42,5 +42,6 @@ services:
     volumes:
       - ./nginx/conf:/etc/nginx/conf.d
       - ./static:/var/www/static
+      - ./frontend/unpackage/dist/build/web:/var/www/h5
     depends_on:
       - django
