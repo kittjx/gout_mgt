@@ -18,23 +18,20 @@ services:
       - db
 
   db:
-    image: mysql:9
-    container_name: mysql-prod
+    image: postgres:17-alpine
+    container_name: postgres-prod
     restart: always
     environment:
-      MYSQL_DATABASE: proddb
-      MYSQL_USER: produser
-      MYSQL_PASSWORD: prodpass
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_ROOT_HOST: '%'  # Allow root connections from any host
-      MYSQL_HOST: '%'       # Allow user connections from any host
+      POSTGRES_DB: proddb
+      POSTGRES_USER: produser
+      POSTGRES_PASSWORD: prodpass
     volumes:
-      - ./db_data:/var/lib/mysql
+      - ./db_data:/var/lib/postgresql/data
     ports:
-      - "3306:3306"
+      - "5432:5432"
 
   nginx:
-    image: nginx:latest
+    image: nginx:alpine
     container_name: nginx-proxy
     restart: always
     ports:
